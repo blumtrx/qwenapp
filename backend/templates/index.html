@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobScraper - Flask + BeautifulSoup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 30px 0; margin-bottom: 30px; }
+        header .container { display: flex; align-items: center; justify-content: space-between; }
+        h1 { font-size: 24px; }
+        .badge { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 18px; margin-bottom: 15px; color: #4f46e5; }
+        .job-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+        .job-item:last-child { border-bottom: none; }
+        .job-title { font-weight: 600; color: #1f2937; font-size: 15px; }
+        .job-company { color: #6366f1; font-size: 13px; margin-top: 2px; }
+        .job-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 12px; color: #6b7280; }
+        .tag { background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .terminal { background: #1f2937; color: #d1d5db; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .terminal .info { color: #60a5fa; }
+        .terminal .success { color: #34d399; }
+        .btn { display: inline-block; background: #4f46e5; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; border: none; cursor: pointer; }
+        .btn:hover { background: #4338ca; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+        .stat { background: white; border-radius: 8px; padding: 15px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #4f46e5; }
+        .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div>
+                <h1>🕷️ JobScraper</h1>
+                <p style="opacity: 0.8; font-size: 14px;">Flask + BeautifulSoup Web Scraper</p>
+            </div>
+            <span class="badge">✓ Scraper Active</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Sources</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">$118K</div>
+                <div class="stat-label">Avg Salary</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Remote Jobs</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>📋 Scraped Jobs</h2>
+                <div id="jobs-list">
+                    <div class="job-item">
+                        <div class="job-title">Senior Python Developer</div>
+                        <div class="job-company">TechCorp Solutions</div>
+                        <div class="job-meta">
+                            <span>📍 San Francisco, CA</span>
+                            <span>💰 $130K-$170K</span>
+                        </div>
+                    </div>
+                    <div class="job-item">
+                        <div class="job-title">Full Stack Web Developer</div>
+                        <div class="job-company">InnovateTech Inc.</div>
+                        <div class="job-meta">
+                            <span>📍 New York, NY (Remote)</span>
+                            <span>💰 $110K-$145K</span>
+                        </div>
+                    </div>
+                    <div class="job-item">
+                        <div class="job-title">Data Engineer - Web Scraping</div>
+                        <div class="job-company">DataFlow Analytics</div>
+                        <div class="job-meta">
+                            <span>📍 Austin, TX</span>
+                            <span>💰 $120K-$155K</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="fetchJobs()" style="margin-top: 15px;">🔄 Refresh Jobs</button>
+            </div>
+
+            <div class="card">
+                <h2>📟 Scraper Logs</h2>
+                <div class="terminal" id="terminal">
+                    <div class="info">[10:23:01] INFO: Starting job scraper v2.1.0...</div>
+                    <div class="info">[10:23:02] INFO: Initializing BeautifulSoup parser</div>
+                    <div class="info">[10:23:02] INFO: Connecting to Indeed.com...</div>
+                    <div class="success">[10:23:04] SUCCESS: ✓ Scraped 4 jobs from Indeed (2.3s)</div>
+                    <div class="info">[10:23:04] INFO: Connecting to LinkedIn.com...</div>
+                    <div class="success">[10:23:07] SUCCESS: ✓ Scraped 3 jobs from LinkedIn (3.1s)</div>
+                    <div class="info">[10:23:07] INFO: Connecting to Glassdoor.com...</div>
+                    <div class="success">[10:23:09] SUCCESS: ✓ Scraped 2 jobs from Glassdoor (1.8s)</div>
+                    <div class="success">[10:23:13] SUCCESS: ✓ Total: 12 jobs scraped successfully</div>
+                </div>
+                <button class="btn" onclick="triggerScrape()" style="margin-top: 15px;">🕷️ Run Scraper</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchJobs() {
+            try {
+                const response = await fetch('/api/jobs');
+                const data = await response.json();
+                console.log('Jobs:', data);
+                alert(`Found ${data.count} jobs!`);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function triggerScrape() {
+            try {
+                const response = await fetch('/api/scrape', { method: 'POST' });
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>
